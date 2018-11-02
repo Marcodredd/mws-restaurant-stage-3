@@ -147,7 +147,7 @@ reviewsForm.addEventListener("submit", function(event) {
     review[key] = value;
   }
   DBHelper.reviewSubmission(review)
-    .then(review => {
+    .then(response => {
         const ul = document.getElementById('reviews-list');
         ul.appendChild(createReviewHTML(review));
         reviewsForm.reset();

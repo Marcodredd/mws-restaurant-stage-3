@@ -5,7 +5,9 @@
   "description": "a Sails application",
   "keywords": [],
   "dependencies": {
+    "ejs": "^2.6.1",
     "include-all": "^1.0.0",
+    "npm": "^6.4.1",
     "rc": "1.0.1",
     "sails": "^0.12.13",
     "sails-disk": "~0.10.9"

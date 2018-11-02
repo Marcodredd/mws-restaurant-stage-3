@@ -1,22 +1,23 @@
 
-  'use strict';
+ /* 'use strict';
   //check fo support
   if (!('indexedDB' in window)) {
     console.log('This browser doesn\'t support IndexedDB');
-  }
+  }*/
 /**
  * Create database
  */
-  var dbPromise = idb.open('restaurant-db', 2, function(upgradeDb) {
-    switch(upgradeDb.oldVersion) {
-      case 0:
-      case 1:
+  var dbPromise = idb.open('restaurantdb', 3, function(upgradeDb) {
+    if (!upgradeDb.objectStoreNames.contains('restaurants')) {
       upgradeDb.createObjectStore('restaurants', {keyPath: 'id'});
-      case 2:
-      upgradeDb.createObjectStore('reviews', {keyPath: 'id'});
-      case 3:
-      upgradeDb.createObjectStore('reviewsOffline', {keyPath: 'updatedAt'});
     }
+    if (!upgradeDb.objectStoreNames.contains('reviews')) {
+      upgradeDb.createObjectStore('reviews', {autoIncrement: true, keyPath: 'id'});
+    }
+    if (!upgradeDb.objectStoreNames.contains('reviewsOffline')) {
+      upgradeDb.createObjectStore('reviewsOffline', {autoIncrement: true, keyPath: 'id'});
+    }
+
   });  
 
 /**
@@ -41,29 +42,71 @@ class DBHelper {
       var tx = db.transaction('restaurants');
       var store = tx.objectStore('restaurants');
   
-      store.getAll().then(results => {
-          if (results.length === 0) {
-            fetch(`${DBHelper.DATABASE_URL}/restaurants`)
-            .then(response => {
-              return response.json();
-            })
-            .then(restaurants => {
-                var tx = db.transaction('restaurants', 'readwrite');
-                var store = tx.objectStore('restaurants');
-                restaurants.forEach(restaurant => {
-                  store.put(restaurant);
-                })
-                callback(null, restaurants);
-            })
-            .catch(error => {
-              callback(error, null);
-            });
-          } else {
-            callback(null, results);
+      return store.getAll();
+    }).then(function(restaurants) {
+    if (restaurants.length !== 0) {
+      callback(null, restaurants);
+    } else {
+      fetch(`${DBHelper.DATABASE_URL}/restaurants`)
+        .then(response => response.json())
+        .then(function(restaurants) {
+
+        dbPromise.then(function(db) {
+          var tx = db.transaction('restaurants', 'readwrite');
+          var store = tx.objectStore('restaurants');
+    
+          for (let restaurant of restaurants) {
+              store.put(restaurant);
           }
-      })
-  })
-}       
+          return tx.complete;          
+          }).then(function() {
+          console.log('Restaurants added to store');
+          }).catch(function(error) {
+          console.log('Error adding restaurants to store', error);
+          }).finally(function(error) {
+            callback(null, restaurants);
+          })
+          }).catch(error => callback(error, null))
+        }
+    })
+  }
+
+/**
+   * Fetch all reviews
+   */
+  static fetchRestaurantReviews(callback) {
+    dbPromise.then(function(db) {
+      var tx = db.transaction('reviews');
+      var store = tx.objectStore('reviews');
+
+      return store.getAll();
+    }).then(function(reviews) {
+      if (reviews.length !== 0) {
+        callback(null, reviews);
+      } else {
+        fetch(`${DBHelper.DATABASE_URL}/reviews/`)
+        .then(response => response.json())
+        .then(function(reviews) {
+          dbPromise.then(function(db) {
+            var tx = db.transaction('reviews', 'readwrite');
+            var store = tx.objectStore('reviews');
+
+            for ( let review of reviews) {
+              store.put(review);
+            }
+            return tx.complete;
+          }).then(function() {
+            console.log('Reviews added to store');
+          }).catch(function(error) {
+            console.log('Error adding reviews to the store', error);
+          }).finally(function(error) {
+            callback(null, reviews);
+          })
+        }).catch(error => callback(error, null));
+      }
+    })
+
+  }
         
   static checkFavoriteRestaurant(restaurant, isFavorite) {
     fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurant.id}/?is_favorite=${isFavorite}`,{
@@ -94,78 +137,11 @@ class DBHelper {
   }
 
   /**
-   * Fetch all reviews for a restaurant
-   */
-  static fetchRestaurantsReview(restaurant, callback) {
-    dbPromise.then(function(db) {
-      var tx = db.transaction('reviews');
-      var store = tx.objectStore('reviews');
-  
-      store.getAll().then(results => {
-          if (results.length > 0) {
-            callback(null, results);
-          } else {
-            fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${restaurant.id}`)
-           
-            .then(response => {
-              return response.json();
-            })
-            
-            .then(reviews => {
-                this.dbPromise.then(db => {
-                var tx = db.transaction('reviews', 'readwrite');
-                var store = tx.objectStore('reviews');
-                reviews.forEach(review => {
-                  store.put(review);
-                })
-              });
-              callback(null, reviews);
-            })
-            .catch(error => {
-              callback(error, null);
-            })
-          }
-      })
-    });
-  }
-
-  /**
    * Fetch a restaurant by its ID.
    */
   static fetchRestaurantById(id, callback) {
-    // fetch all restaurants with proper error handling.
-   /* dbPromise.then(function(db) {
-      var tx = db.transaction('restaurants');
-      var storeId = tx.objectStore('restaurants');
-
-      return storeId.get(parseInt(id))
-    }).then(function(restaurant) {
-     // restaurant = restaurants.find(r => r.id == id);
-      
-        if (restaurant) {
-          callback(null, restaurant)
-        } else {
-          fetch(DBHelper.DATABASE_URL + '/' + id)
-          .then(response => response.json())
-          .then(function(restaurant) {
-            dbPromise.then(function(db) {
-              var tx = db.transaction('restaurants', 'readwrite');
-              var storeId = tx.objectStore('restaurants');
-
-              storeId.put(restaurant);
-              return tx.complete;
-            }).then(function() {
-              console.log('Specific restaurant added to the store');
-            }).catch(function(error) {
-              console.log('Error saving restaurant', error);
-            }).finally(function(error) {
-              callback(null, restaurant);
-            })
-          }).catch(error => callback(error, null)) 
-            }
-        })*/
-      
-    DBHelper.fetchRestaurants((error, restaurants) => {
+    // fetch all restaurants with proper error handling.      
+   DBHelper.fetchRestaurants((error, restaurants) => {
       if (error) {
         callback(error, null);
       } else {
@@ -178,19 +154,28 @@ class DBHelper {
       }
     });
   }
-
-  static fetchReviewsById(id) {
-    fetch(`${DBHelper.DATABASE_URL}/reviews`)
-      .then(function(response) {
-        return response.json();
-      }).then(reviews => {
-        const reviewsById = reviews.filter(r => r.restaurant_id == id);
-        if (reviewsById) {
+/**
+ * 
+ * Fetch a restaurant review by id
+ */
+static fetchReviewsById(id){
+  fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${id}`)
+        .then(function(response){
+          return response.json();
+      }).then(reviews=> {
+        dbPromise.then(db => {
+          var tx = db.transaction('reviews', 'readwrite');
+          var store = tx.objectStore('reviews');
+          store.put(reviews);
+          
+          const reviewsById = reviews.filter(r => r.restaurant_id == id);
+        if(reviewsById)
           fillReviewsHTML(reviewsById);
-        } else
+        else
           fillReviewsHTML(null);
+        })
       });
-  }
+}
   /**
    * Fetch restaurants by a cuisine type with proper error handling.
    */
@@ -345,26 +330,23 @@ static reviewSubmission(data) {
   });
 }
 
-static offlineReviewsSubmission() {
-  dbPromise.then(db => {
-    var tx = db.transaction('reviewsOffline');
-    var store = tx.objectStore('reviewsOffline');
-    store.getAll().then(reviewsOffline => {
-      console.log(reviewsOffline);
-      reviewsOffline.forEach(review => {
-        DBHelper.reviewSubmission(review);
-      })
-      DBHelper.deleteOfflineReviews();
+static offlineReviewsSubmission(reviews) {
+  reviews.map(review => {
+    fetch(`${DBHelper.DATABASE_URL}/reviews`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(review)
+    })
+    .then(response => {
+      if (response.status === 201) {
+        return store.restaurantdb('readwrite').then(function(restaurantdb) {
+          return restaurantdb.delete(review.id);
+        });
+      }
     })
   })
-}
-
-static deleteOfflineReviews() {
-  dbPromise.then(db => {
-    var tx = db.transaction('reviewsOffline', 'readwrite');
-    var store = tx.objectStore('reviewsOffline').clear();
-  })
-  return;
-}
+ }
 }
 

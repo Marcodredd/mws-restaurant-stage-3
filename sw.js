@@ -2,8 +2,9 @@
  * With needed help from developers.google.com/web/fundamentals/primers/service-workers
  * Caching static files using service worker
  */
-//importScripts('/js/idb.js');
-//importScripts('/js/dbhelper.js');
+importScripts("/js/idb.js");
+importScripts('/js/dbhelper.js');
+importScripts('js/store.js');
 
 var staticCacheName = 'restaurant-info';
 var urlsToCache = [
@@ -75,51 +76,25 @@ self.addEventListener('message', function(event) {
 });
 
 self.addEventListener('sync', function(event) {
-  if (event.tag == 'myFirstSync') {
-    var dbPromise = indexedDB.open('restaurant-db', 2);
-    dbPromise.onsuccess = function(e) {
-      db = dbPromise.result;
-      var tx = db.transaction('reviewsOffline', 'readwrite');
-      var store = tx.objectStore('reviewsOffline');
-
-      var request = store.getAll();
-      request.onsuccess = function() {
-        for ( let i = 0; i < request.length; i++) {
-          fetch(`http://localhost:1337/reviews/`, {
-            body: JSON.stringify(request[i]),
-            headers: {
-                'content-type': 'application.json'
-            },
-            method: 'POST',
-          })
-          .then(response => {
-            return response.json();
-          })
-          .then(data => {
-            var tx = db.transaction('reviews', 'readwrite');
-            var store = tx.objectStore('reviews');
-            var request = store.add(data);
-            request.onsuccess = function() {
-              var tx = db.transaction('reviewsOffline', 'readwrite');
-              var store = tx.objectStore('reviewsOffline');
-              var request = store.clear();
-              request.onsuccess = function() {};
-              request.onerror = function (error) {
-                console.log('Offline reviews could not be cleared', error);
-                }
-            };
-            request.onerror = function (error) {
-              console.log('Objectstore could not be added to IndexedDb', error);
-            }
-          })
-          .catch(error => {
-            console.log('Error making a POST', error);
-          })
+  if (event.tag === 'firstSync') {
+    event.waitUntil(
+      store.restaurantdb('readonly').then(function(restaurantdb) {
+        return restaurantdb.getAll();
+      }).then(reviews => {
+        if (!reviews) {
+          return;
         }
-      }
-      request.onerror = function(e) {
-        console.log(e);
-      }
-    }
+        DBHelper.offlineReviewsSubmission(reviews);
+      }).then(() => {
+        console.log('sync successful');
+      }).catch(function(err) {
+        console.error(err);
+      })
+    );
   }
+  
 });
+  
+    
+  
+  

@@ -52,8 +52,6 @@
     <!-- end restaurant -->
     <!-- Beginning reviews -->
     <section id="reviews-container">
-      <ul id="reviews-list">
-      </ul>
       <form id="reviewForm">
         <p>
           <label for="name">Name:</label>
@@ -77,6 +75,8 @@
           <input type="submit" value="Submit Review">
         </p>
       </form>
+      <ul id="reviews-list">
+      </ul>
     </section>
     <!-- End reviews -->
   </main>
@@ -95,6 +95,7 @@
   <script src="js/dbhelper.js"></script>
   <!-- Main javascript file -->
   <script src="js/restaurant_info.js"></script>
+  <script src="js/store.js"></script>
   <script>
     if('serviceWorker' in navigator) {
     navigator.serviceWorker
