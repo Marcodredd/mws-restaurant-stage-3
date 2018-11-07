@@ -138,6 +138,18 @@ http://localhost:1337/reviews/<review_id>
 #### Delete a restaurant review
 ```
 http://localhost:1337/reviews/<review_id>
+
+### To Run The App
+
+#### For Python2:
+At the root folder, use python -m SimpleHTTPServer 8080 at the command line.
+Then type localhost:8080 into your browser
+
+#### For Python3:
+At the root folder, use python3 -m http.server 8080 at the command line.
+Then type localhost:8080 into your browser
+
+Open a separate command line and type 'node server' to luanch sails as stated earlier.
 ```
 
 
