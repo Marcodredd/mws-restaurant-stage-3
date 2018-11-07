@@ -1,5 +1,6 @@
 /**
  * With needed help from developers.google.com/web/fundamentals/primers/service-workers
+ * With needed assistance from ponyfoo.com on background sync
  * Caching static files using service worker
  */
 importScripts("/js/idb.js");
