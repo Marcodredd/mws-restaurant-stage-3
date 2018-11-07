@@ -7,7 +7,7 @@
 /**
  * Create database
  */
-  var dbPromise = idb.open('restaurantdb', 3, function(upgradeDb) {
+  var dbPromise = idb.open('restaurantd-b', 3, function(upgradeDb) {
     if (!upgradeDb.objectStoreNames.contains('restaurants')) {
       upgradeDb.createObjectStore('restaurants', {keyPath: 'id'});
     }
@@ -296,7 +296,7 @@ static fetchReviewsById(id){
   /**
    * Submit Reviews to database
    */
-static reviewSubmission(data) {
+/*static reviewSubmission(data) {
   return fetch(`${DBHelper.DATABASE_URL}/reviews/`, {
     method: 'POST',
     headers: {
@@ -328,25 +328,65 @@ static reviewSubmission(data) {
     });
     return;
   });
-}
+} */
 
-static offlineReviewsSubmission(reviews) {
-  reviews.map(review => {
-    fetch(`${DBHelper.DATABASE_URL}/reviews`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(review)
-    })
-    .then(response => {
-      if (response.status === 201) {
-        return store.restaurantdb('readwrite').then(function(restaurantdb) {
-          return restaurantdb.delete(review.id);
-        });
-      }
-    })
+static reviewsSubmission(review) {
+  /*dbPromise.then(function(db) {
+    var tx = db.transaction('reviews');
+    var store = tx.objectStore('reviews');
+
+    return store.getAll();
+  }).then(function(reviews) {
+    if (reviews.length !== 0) {
+      callback(null, reviews);
+    } else {*/
+  return fetch(`${DBHelper.DATABASE_URL}/reviews/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(review)
   })
+  .then(response => {
+    response.json()
+      .then(review => {
+        dbPromise.then(db => {
+          const tx = db.transaction('reviews', 'readwrite');
+          const store = tx.objectStore('reviews');
+          store.put(review);
+        });
+        return review;
+      })
+  })
+  .catch(error => {
+    dbPromise.then(db => { 
+      const tx = db.transaction('reviewsOffline', 'readwrite');
+      const store = tx.objectStore('reviewsOffline');
+      store.put(review);
+      console.log('Review saved to IDB');
+
+    });
+    return;
+  })
+ }
+
+ static offlineReviewsSubmission() {
+   return dbPromise.then(db => {
+     const tx = db.transaction('reviewsOffline', 'readonly');
+     const store = tx.objectStore('reviewsOffline');
+     return store.getAll();
+       })
+     //  DBHelper.deleteReviewsOffline();
+ }
+
+ static deleteReviewsOffline() {
+   return dbPromise.then(db => {
+     const tx = db.transaction('reviewsOffline', 'readwrite');
+     const reviewsOffline = tx.objectStore('reviewsOffline');
+     reviewsOffline.clear();
+     return tx.complete;
+   })
  }
 }
 

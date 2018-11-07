@@ -6,12 +6,13 @@
   <meta charset="utf-8">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#3367D6"/>
+  <link rel="preconnect" href="https://api.tiles.mapbox.com"/>
   <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-  <link href="https://fonts.googleapis.com/css?family=Ubuntu" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css?family=Fira+Sans" rel="stylesheet">
+  <link rel ="preload" href="https://fonts.googleapis.com/css?family=Ubuntu" as="style">
+  <link rel ="preload" href="https://fonts.googleapis.com/css?family=Fira+Sans" as="style">
   <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin=""/>
+  <link rel="stylesheet" href="css/styles.min.css" type="text/css">
+  <link rel="preload" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin="" as="style" onload="this.rel='stylesheet'"/>
   <link rel="manifest" href="/manifest.json">
   <title>Restaurant Info</title>
 </head>
@@ -59,8 +60,8 @@
         </p>
         <p>&nbsp;</p>
         <p>
-          <label for="rating">Rating</label>
-          <select name="rating">
+          <label id ="optionRating" for="rating">Rating</label>
+          <select class = "optionRating" name="rating">
             <option value="1" selected>1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -72,7 +73,7 @@
           <textarea rows="4" name="comments" placeholder="Write Reviews Here" required></textarea>
         </p>
         <p>
-          <input type="submit" value="Submit Review">
+          <input id = "submitButton" type="submit" value="Submit Review">
         </p>
       </form>
       <ul id="reviews-list">
@@ -95,52 +96,24 @@
   <script src="js/dbhelper.js"></script>
   <!-- Main javascript file -->
   <script src="js/restaurant_info.js"></script>
-  <script src="js/store.js"></script>
   <script>
     if('serviceWorker' in navigator) {
     navigator.serviceWorker
-             .register('/sw.js')
-             .then(function(registration) {
-              console.log('Service Worker Registered', registration.scope);
-
-              if (!navigator.serviceWorker.controller) {
-                return;
-              }
-
-              if (registration.waiting) {
-                navigator.serviceWorker.controller.postMessage({action: 'skipwaiting'});
-              }
-
-              if (registration.installing) {
-                navigator.serviceWorker.addEventListener('statechange', function() {
-                  if (navigator.serviceWorker.controller.state == 'installed') {
-                    navigator.serviceWorker.controller.postMessage({action: 'skipwaiting'});
-                  }
-                });  
-              }
-              registration.addEventListener('updatefound', function() {
-                navigator.serviceWorker.addEventListener('statechange', function() {
-                  if (navigator.serviceWorker.controller.state == 'installed') {
-                    navigator.serviceWorker.controller.postMessage({action: 'skipwaiting'});
-                  }
-                });
+             .register('./sw.js')
+             .then(registration => navigator.serviceWorker.ready)
+             .then(registration =>{
+               document.getElementById('submitButton').addEventListener('click', () => {
+                 registration.sync.register('firstSync').then(() => {
+                   console.log('Sync registered');
+                 });
+               });
              });
-            })
-             .catch(function(error) {
-              console.log('Service worker registration failed, error:', error);
-             });
+            } else {
+              document.getElementById('submitButton').addEventListener('click', () => {
+                console.log('Failed to sync as usual');
+              });
 
-             var refreshing;
-             navigator.serviceWorker.addEventListener('controllerchange', function () {
-               if (refreshing) return;
-               window.location.reload();
-               refreshing = true;
-             })
-
-             navigator.serviceWorker.ready.then(function(swRegistration) {
-               return swRegistration.sync.register('myFirstSync');
-             });
-    }
+            }
       
   </script>
   

@@ -58,6 +58,31 @@ module.exports = function(grunt) {
       },
     },
 
+    /* Minify the css file and add a .min.css */
+    cssmin: {
+      target: {
+        files: [{
+          expand: true,
+          cwd: 'css/',
+          src: ['*.css', '!*.min.css'],
+          dest: 'css/',
+          ext: '.min.css'
+        }]
+      }
+    },
+
+    /* Minify JavaScript with UglifyJS */
+    uglify: {
+      options: {
+        mangle: false
+      },
+      my_target: {
+        files: {
+          'js/' : ['js/dbhelper.js']
+        }
+      }
+    }
+
   });
 
   grunt.loadNpmTasks('grunt-responsive-images');
@@ -65,5 +90,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-mkdir');
   grunt.registerTask('default', ['clean', 'mkdir', 'responsive_images']);
-
+  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-cssmin');
 };

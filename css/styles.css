@@ -310,8 +310,8 @@ nav h1 a {
 #reviews-list {
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
+ /* display: flex;
+  flex-wrap: wrap; */
 }
 
 #reviews-list li {
@@ -421,9 +421,40 @@ a.skip-main:focus, a.skip-main:active {
   z-index:999;
 }
 
+#reviewForm {
+	margin: 0;
+  width: 100%;
+  padding: 0;
+}
+#reviewForm, textarea {
+  width: calc(100% - 5px);
+  font-size: 15px;
+}
+
+#reviewForm, #name, #optionRating, .optionRating {
+  font-size: 15px;
+}
+
+#submitButton {
+  background-color: #0066A2;
+  color: white;
+  border-style: outset;
+  border-color: #0066A2;
+  height: 50px;
+  width: 150px;
+  font: bold 15px arial, sans-serif;
+  text-shadow: none;
+}
+
 @media screen and (max-width: 450px) {
   nav h1 a {
     letter-spacing: 0.2em;
+  }
+
+  #reviews-list {
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
   }
 
   .review-header, #reviews-list li p.rating{
@@ -454,6 +485,13 @@ a.skip-main:focus, a.skip-main:active {
   .filter-options select,
   .filter-options h2 {
     width: calc((100% - 3 * 40px) / 3);
+  }
+  
+  #reviews-list {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
   }
 
   #reviews-list li {

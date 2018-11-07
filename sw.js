@@ -4,7 +4,6 @@
  */
 importScripts("/js/idb.js");
 importScripts('/js/dbhelper.js');
-importScripts('js/store.js');
 
 var staticCacheName = 'restaurant-info';
 var urlsToCache = [
@@ -52,19 +51,18 @@ self.addEventListener('activate', function(event) {
   );
 });
 
-self.addEventListener('fetch', function(event) {
-  var requestUrl = new URL(event.request.url);
-
-  if (requestUrl.origin === location.origin) {
-    if (requestUrl.pathname === './restaurant.html') {
-      event.respondWith(caches.match(`./restaurant.html?id=${restaurant.id}`));
-      return;
-    }
-  }
-
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(function(response) {
-      return response || fetch(event.request);
+    caches.match(event.request, { ignoreSearch: true }).then(response => {
+      return response || fetch(event.request).then(res => {
+        if (!res || res.status !== 200 || res.type !== 'basic') {
+          return res;
+        }
+        return caches.open(staticCacheName).then(cache => {
+          cache.put(event.request, res.clone());
+          return res;
+        })
+      });
     })
   );
 });
@@ -78,22 +76,29 @@ self.addEventListener('message', function(event) {
 self.addEventListener('sync', function(event) {
   if (event.tag === 'firstSync') {
     event.waitUntil(
-      store.restaurantdb('readonly').then(function(restaurantdb) {
-        return restaurantdb.getAll();
-      }).then(reviews => {
-        if (!reviews) {
-          return;
-        }
-        DBHelper.offlineReviewsSubmission(reviews);
-      }).then(() => {
-        console.log('sync successful');
-      }).catch(function(err) {
-        console.error(err);
-      })
-    );
+      DBHelper.offlineReviewsSubmission()
+       .then(data => {
+         for (const review of data) {
+           fetch(`${DBHelper.DATABASE_URL}/reviews/`, {
+             method: 'POST',
+             headers: {
+               'Content-Type': 'application/json',
+               Accept: 'application/json'
+             },
+             body: JSON.stringify(review)
+           })
+           .then(response => response.json())
+           .then(() => {
+            DBHelper.deleteReviewsOffline();
+             })
+             .catch(error => console.log('Review not synced to database', error));
+           }
+       })
+       .catch(error => console.log('Unable to fetch reviews', error))
+    )
   }
   
-});
+})
   
     
   
