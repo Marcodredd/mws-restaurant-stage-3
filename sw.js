@@ -75,7 +75,7 @@ self.addEventListener('message', function(event) {
 });
 
 self.addEventListener('sync', function(event) {
-  if (event.tag === 'firstSync') {
+  if (event.tag === 'offlineSync') {
     event.waitUntil(
       DBHelper.offlineReviewsSubmission()
        .then(data => {

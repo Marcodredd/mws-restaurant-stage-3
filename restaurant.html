@@ -24,6 +24,7 @@
     <!-- Beginning nav -->
     <nav>
       <h1><a href="/">Restaurant Reviews</a></h1>
+      <div id="connectionStatus"></div>
     </nav>
     <!-- Beginning breadcrumb -->
     <ul id="breadcrumb" role="navigation" aria-label="breadcrumb">
@@ -96,6 +97,7 @@
   <script src="js/dbhelper.js"></script>
   <!-- Main javascript file -->
   <script src="js/restaurant_info.js"></script>
+  <script src="js/onOff.js" async defer></script>
   <script>
     if('serviceWorker' in navigator) {
     navigator.serviceWorker
@@ -103,7 +105,7 @@
              .then(registration => navigator.serviceWorker.ready)
              .then(registration =>{
                document.getElementById('submitButton').addEventListener('click', () => {
-                 registration.sync.register('firstSync').then(() => {
+                 registration.sync.register('offlineSync').then(() => {
                    console.log('Sync registered');
                  });
                });

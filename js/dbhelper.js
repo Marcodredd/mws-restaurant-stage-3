@@ -293,53 +293,8 @@ static fetchReviewsById(id){
     return marker;
   }
 
-  /**
-   * Submit Reviews to database
-   */
-/*static reviewSubmission(data) {
-  return fetch(`${DBHelper.DATABASE_URL}/reviews/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type' : 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => {
-    response.json()
-      .then(data => {
-          dbPromise.then(db => {
-           if (!db) return;
-          var tx = db.transaction('reviews', 'readwrite');
-          var store = tx.objectStore('reviews');
-          store.put(data);
-        });
-        return data;
-      })
-  })
-  .catch(error => {
-    data['updatedAt'] = new Date().getTime();
-    console.log(data);
-
-      dbPromise.then(db => {
-      if (!db) return;
-      var tx = db.transaction('reviewsOffline', 'readwrite');
-      var store = tx.objectStore('reviewsOffline');
-      store.put(data);
-    });
-    return;
-  });
-} */
 
 static reviewsSubmission(review) {
-  /*dbPromise.then(function(db) {
-    var tx = db.transaction('reviews');
-    var store = tx.objectStore('reviews');
-
-    return store.getAll();
-  }).then(function(reviews) {
-    if (reviews.length !== 0) {
-      callback(null, reviews);
-    } else {*/
   return fetch(`${DBHelper.DATABASE_URL}/reviews/`, {
     method: 'POST',
     headers: {
