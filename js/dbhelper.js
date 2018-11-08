@@ -326,7 +326,7 @@ static reviewsSubmission(review) {
   })
  }
 
- static offlineReviewsSubmission() {
+static offlineReviewsSubmission() {
    return dbPromise.then(db => {
      const tx = db.transaction('reviewsOffline', 'readonly');
      const store = tx.objectStore('reviewsOffline');
